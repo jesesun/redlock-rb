@@ -14,7 +14,8 @@ class Redlock
     def initialize(*server_urls)
         @servers = []
         server_urls.each{|url|
-            @servers << Redis.new(:url => url)
+            #@servers << Redis.new(:url => url)
+            @servers << url
         }
         @quorum = server_urls.length / 2 + 1
         @retry_count = DefaultRetryCount
@@ -29,7 +30,7 @@ class Redlock
 
     def lock_instance(redis,resource,val,ttl)
         begin
-            return redis.client.call([:set,resource,val,:nx,:px,ttl])
+            return redis.call([:set,resource,val,:nx,:px,ttl])
         rescue
             return false
         end
@@ -37,7 +38,7 @@ class Redlock
 
     def unlock_instance(redis,resource,val)
         begin
-            redis.client.call([:eval,UnlockScript,1,resource,val])
+            redis.call([:eval,UnlockScript,1,resource,val])
         rescue
             # Nothing to do, unlocking is just a best-effort attempt.
         end
